@@ -10,7 +10,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Obtener todas las aves
+// Obtener las aves
 app.get("/aves", async (req, res) => {
   const { data, error } = await supabase.from("aves").select(`
       ave_id,
@@ -20,6 +20,7 @@ app.get("/aves", async (req, res) => {
       tamano,
       dieta,
       habitat,
+      url_img,
       familias(nombre),
       estados_conservacion(nombre)
     `);
