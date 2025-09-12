@@ -2,30 +2,29 @@
 
 import express from "express";
 import cors from "cors";
-import { supabase } from "./data-source.js"; //siempre pon la extension .js
+
+import auth from "./routes/auth.routes.js";
+import aves from "./routes/aves.routes.js";
+import { transporter } from "./data-source.js";
 
 const PORT = process.env.PORT;
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Obtener todas las aves
-app.get("/aves", async (req, res) => {
-  const { data, error } = await supabase.from("aves").select(`
-      ave_id,
-      nombre_comun,
-      nombre_cientifico,
-      descripcion,
-      tamano,
-      dieta,
-      habitat,
-      familias(nombre),
-      estados_conservacion(nombre)
-    `);
+app.use("/aves", aves);
 
-  if (error) return res.status(500).json({ error: error.message });
-  res.json(data);
+app.use("/auth", auth);
+
+transporter.verify((error, success) => {
+  if (error) {
+    console.log("Error al conectar con el servidor de correo:", error);
+  } else {
+    console.log("Servidor de correo listo para enviar emails");
+  }
 });
 
 app.listen(PORT, () => {
