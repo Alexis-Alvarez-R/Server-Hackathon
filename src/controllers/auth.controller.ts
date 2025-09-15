@@ -6,7 +6,6 @@ import enviarGmail from "../service/auth/enviarGmail.js";
 import type { Request, Response } from "express";
 import type reqRegistrar from "../interfaces/iReqRegistrar.js";
 import validarEmail from "../utils/auth/validarEmail.js";
-import cookieParser from "cookie-parser";
 import compararPassword from "../utils/auth/compararPassword.js";
 
 import dotenv from "dotenv";
@@ -16,10 +15,11 @@ dotenv.config();
 export const iniciarSesion = async (req: Request, res: Response) => {
   try {
     console.log("Se entro en iniciarSesion");
-
+    console.log("Esta es la cookie");
+    console.log(req.cookies.access_token);
     //Desde frontend el input email se llama asi propiamente
     //pero a uso practico permito que al usuario ingresar con su
-    //nombre o email
+    //nombre o email en el mismo input
     const { email: identificacion, password } = req.body;
 
     const campo = validarEmail(identificacion) ? "email" : "nombre";
@@ -91,7 +91,7 @@ export const registrarUsuario = async (
           message: "Usuario creado. Revisa tu correo para verificar tu cuenta.",
         });
       }
-      console.log("clg Ya esta registrado");
+      console.log("Ya esta registrado");
       console.log(data1);
       return res
         .status(400)
@@ -130,11 +130,11 @@ export const registrarUsuario = async (
 //intenta registrar
 export const verificarToken = async (req: Request, res: Response) => {
   console.log("Estmos en verificar Tokeeeenn");
-  console.log(req.query.token);
+  console.log(req.query.tokenVerificacion);
 
-  const { token } = req.query;
+  const { tokenVerificacion } = req.query;
 
-  if (!token || typeof token !== "string") {
+  if (!tokenVerificacion || typeof tokenVerificacion !== "string") {
     return res.status(400).json({ mensaje: "Token faltante o inválido" });
   }
 
@@ -142,8 +142,8 @@ export const verificarToken = async (req: Request, res: Response) => {
     // Buscar el usuario por token y opcionalmente validar fecha de expiración
     const { data: usuario, error } = await supabase
       .from("usuarios")
-      .select("id_usuario, fechaexpiracion, verificado")
-      .eq("token_verificacion", token)
+      .select("id_usuario, fechaexpiracion, verificado, nombre, email")
+      .eq("token_verificacion", tokenVerificacion)
       .maybeSingle();
 
     console.log(usuario);
@@ -171,7 +171,20 @@ export const verificarToken = async (req: Request, res: Response) => {
 
     if (errorUpdate) throw errorUpdate;
 
-    res.json({ mensaje: "Usuario verificado correctamente" });
+    const token = jwt.sign(
+      { nombre: usuario.nombre, email: usuario.email },
+      SECRET_KEY_JWT,
+      {
+        expiresIn: "1h",
+      }
+    );
+    res.cookie("access_token", token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+    });
+    // res.json({ mensaje: "Usuario verificado correctamente" });
+    res.redirect("http://localhost:5173/Aviturismo");
   } catch (err: any) {
     console.error(err);
     res

@@ -9,7 +9,7 @@ export default async function enviarGmail(email: string, token: string) {
     to: email,
     subject: "Verifica tu correo",
     html: `<p>Haz click en el link para verificar tu cuenta:</p>
-                   <a href="http://localhost:${process.env.PORT}/auth/verificartoken?token=${token}">Verificar correo</a>`,
+                   <a href="http://localhost:${process.env.PORT}/auth/verificartoken?tokenVerificacion=${token}">Verificar correo</a>`,
   };
 
   await transporter.sendMail(mailOptions);
