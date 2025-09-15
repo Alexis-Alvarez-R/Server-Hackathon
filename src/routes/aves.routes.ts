@@ -1,9 +1,9 @@
 import { Router } from "express";
-import { getAves } from "../controllers/aves.controller.js";
+import { getAves, getAvesPorZona } from "../controllers/aves.controller.js";
 
-const router = Router()
+const router = Router();
 
-router.get("/", getAves)
+router.get("/", getAves);
+router.get("/zona/:zonaId", getAvesPorZona);
 
-
-export default router
+export default router;
