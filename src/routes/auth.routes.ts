@@ -1,6 +1,6 @@
 import { Router } from "express";
 import {
-  authgoogleCallback,
+  authGoogleCallback,
   iniciarSesion,
   verificarToken,
 } from "../controllers/auth.controller.js";
@@ -14,5 +14,5 @@ router.post("/registrar", registrarUsuario);
 
 router.get("/verificartoken", verificarToken);
 
-router.post("/google/callback", authgoogleCallback);
+router.post("/google/callback", authGoogleCallback);
 export default router;
