@@ -6,6 +6,7 @@ import type { Request, Response } from "express";
 import type reqRegistrar from "../interfaces/iReqRegistrar.js";
 import validarEmail from "../utils/auth/validarEmail.js";
 import compararPassword from "../utils/auth/compararPassword.js";
+import type AuthRequest from "../interfaces/iAuthRequest.js";
 
 import dotenv from "dotenv";
 
@@ -47,7 +48,7 @@ export const iniciarSesion = async (req: Request, res: Response) => {
 
     if (data.password && (await compararPassword(data.password, password))) {
       const token = jwt.sign(
-        { nombre: data.nombre, email: data.email },
+        { name: data.nombre, email: data.email },
         SECRET_KEY_JWT,
         { expiresIn: "1h" }
       );
@@ -57,7 +58,7 @@ export const iniciarSesion = async (req: Request, res: Response) => {
         sameSite: "none",
         secure: true,
       });
-      return res.status(200).json({ mensaje: "Inicio de sesion exitoso" });
+      return res.status(200).json({ nombre: data.nombre, email: data.email });
     }
 
     return res.status(401).json({ mensaje: "Contrasena no valida" });
@@ -118,7 +119,7 @@ export const registrarUsuario = async (
         }
         await enviarGmail(email, token);
         console.log("Se reenvio el link");
-        return res.status(400).json({
+        return res.status(200).json({
           mensaje: "Usuario creado. Revisa tu correo para verificar tu cuenta.",
         });
       }
@@ -145,6 +146,7 @@ export const registrarUsuario = async (
     if (error2)
       return res.status(500).json({ mensaje: "Error al insertar usuario" });
 
+    console.log("se envio email");
     await enviarGmail(email, token);
     return res.status(200).json({
       mensaje: "Revisa tu correo para verificar tu cuenta.",
@@ -222,18 +224,25 @@ export const verificarToken = async (req: Request, res: Response) => {
     }
 
     const token = jwt.sign(
-      { nombre: usuario.nombre, email: usuario.email },
+      { name: usuario.nombre, email: usuario.email },
       SECRET_KEY_JWT,
       {
         expiresIn: "1h",
       }
     );
-    res.cookie("access_token", token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-    });
-    res.redirect("http://localhost:5173/");
+    const userData = {
+      name: usuario.nombre,
+      email: usuario.email,
+    };
+    const query = encodeURIComponent(JSON.stringify(userData));
+
+    return res
+      .cookie("access_token", token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
+      })
+      .redirect(`http://localhost:5173/?user=${query}`);
   } catch (err: any) {
     console.error(err);
     return res.redirect(
@@ -310,7 +319,7 @@ export const authGoogleCallback = async (req: Request, res: Response) => {
           });
         }
 
-        const token = jwt.sign({ email, name }, SECRET_KEY_JWT, {
+        const token = jwt.sign({ name, email }, SECRET_KEY_JWT, {
           expiresIn: "1h",
         });
         res.cookie("access_token", token, {
@@ -318,9 +327,7 @@ export const authGoogleCallback = async (req: Request, res: Response) => {
           secure: true,
           sameSite: "none",
         });
-        return res
-          .status(200)
-          .json({ mensaje: "Usuario registrado con éxito" });
+        return res.status(200).json({ nombre: name, email });
       } else {
         return res
           .status(409)
@@ -330,9 +337,13 @@ export const authGoogleCallback = async (req: Request, res: Response) => {
 
     // Inicio de sesión
     if (accion === "iniciosesion") {
-      if (!data)
+      console.log(data);
+      if (!data) {
+        console.log("no hay data");
         return res.status(404).json({ mensaje: "Usuario no encontrado" });
+      }
 
+      console.log("no see");
       if (data.auth_provider !== "google") {
         return res.status(401).json({
           mensaje:
@@ -343,6 +354,7 @@ export const authGoogleCallback = async (req: Request, res: Response) => {
       const token = jwt.sign({ email, name }, SECRET_KEY_JWT, {
         expiresIn: "1h",
       });
+      console.log(token);
       res.cookie("access_token", token, {
         httpOnly: true,
         secure: true,
@@ -359,3 +371,22 @@ export const authGoogleCallback = async (req: Request, res: Response) => {
       .json({ mensaje: "Token inválido o error en autenticación" });
   }
 };
+
+export const verificarsesion = (req: AuthRequest, res: Response) => {
+  console.log("verificar sesion");
+
+  const session = req.session;
+
+  if (!session?.name) return res.status(403).json({ data: "Token no valido" });
+
+  try {
+    console.log("si es valido");
+    const { name, email } = session;
+    return res.status(200).json({ nombre: name, email });
+  } catch (error) {
+    console.log("no es valido");
+    return res.status(500).json({ data: "No se pudo verificar el token" });
+  }
+};
+
+export const cerrarsesion = (req: Request, res: Response) => {};
