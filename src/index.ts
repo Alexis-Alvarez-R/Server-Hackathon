@@ -5,6 +5,7 @@ import cors from "cors";
 
 import auth from "./routes/auth.routes.js";
 import aves from "./routes/aves.routes.js";
+import lugares from "./routes/lugares.routes.js";
 import cookieParser from "cookie-parser";
 
 const PORT = process.env.PORT;
@@ -19,6 +20,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/aves", aves);
 
 app.use("/auth", auth);
+
+app.use("/lugares", lugares);
 
 app.listen(PORT, () => {
   console.log("Servidor corriendo");
