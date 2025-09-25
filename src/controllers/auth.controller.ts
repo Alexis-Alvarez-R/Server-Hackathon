@@ -6,17 +6,17 @@ import type { Request, Response } from "express";
 import type reqRegistrar from "../interfaces/iReqRegistrar.js";
 import validarEmail from "../utils/auth/validarEmail.js";
 import compararPassword from "../utils/auth/compararPassword.js";
+import cifrarPassword from "../utils/auth/cifrarPassword.js";
 import type AuthRequest from "../interfaces/iAuthRequest.js";
-
 import dotenv from "dotenv";
-
+import jwt from "jsonwebtoken";
+import tokenExpirado from "../utils/auth/tokenExpirado.js";
 dotenv.config();
+const SECRET_KEY_JWT = process.env.SECRET_KEY_JWT as string;
 
 export const iniciarSesion = async (req: Request, res: Response) => {
   try {
     console.log("Se entro en iniciarSesion");
-    // console.log("Esta es la cookie");
-    // console.log(req.cookies.access_token);
     //Desde frontend el input email se llama asi propiamente
     //pero a uso practico permito que al usuario ingresar con su
     //nombre o email en el mismo input
@@ -30,7 +30,7 @@ export const iniciarSesion = async (req: Request, res: Response) => {
     const campo = validarEmail(identificacion) ? "email" : "nombre";
     const { data, error } = await supabase
       .from("usuarios")
-      .select("email, nombre, password, auth_provider")
+      .select("email, nombre, password, auth_provider, imagenurl")
       .eq(campo, identificacion)
       .eq("verificado", true)
       .maybeSingle();
@@ -48,22 +48,25 @@ export const iniciarSesion = async (req: Request, res: Response) => {
 
     if (data.password && (await compararPassword(data.password, password))) {
       const token = jwt.sign(
-        { name: data.nombre, email: data.email },
+        { name: data.nombre, email: data.email, picture: data.imagenurl },
         SECRET_KEY_JWT,
         { expiresIn: "1h" }
       );
-      console.log("Se creo una cookie");
       res.cookie("access_token", token, {
         httpOnly: true,
         sameSite: "none",
         secure: true,
+        maxAge: 1000 * 60 * 60,
       });
-      return res.status(200).json({ nombre: data.nombre, email: data.email });
+      return res.status(200).json({
+        name: data.nombre,
+        email: data.email,
+        picture: data.imagenurl,
+      });
     }
 
     return res.status(401).json({ mensaje: "Contrasena no valida" });
   } catch (error) {
-    console.log("Ocurrio un error en iniciar sesion");
     return res
       .status(500)
       .json({ mensaje: "Upss algo salio mal, intentalo mas tarde" });
@@ -102,7 +105,6 @@ export const registrarUsuario = async (
     if (data1) {
       if (!data1.verificado) {
         if (tokenExpirado(data1.fechaexpiracion)) {
-          console.log("ya expiro crar nuevo token");
           const { data: dataUpdate, error: errorUpdate } = await supabase
             .from("usuarios")
             .update({
@@ -165,7 +167,6 @@ export const verificarToken = async (req: Request, res: Response) => {
   console.log("Se entro en verificar Tokeeeenn");
 
   const { tokenVerificacion } = req.query;
-  console.log(tokenVerificacion);
 
   if (!tokenVerificacion || typeof tokenVerificacion !== "string") {
     return res.redirect(
@@ -176,7 +177,9 @@ export const verificarToken = async (req: Request, res: Response) => {
   try {
     const { data: usuario, error } = await supabase
       .from("usuarios")
-      .select("id_usuario, fechaexpiracion, verificado, nombre, email")
+      .select(
+        "id_usuario, fechaexpiracion, verificado, nombre, email, imagenurl"
+      )
       .eq("token_verificacion", tokenVerificacion)
       .maybeSingle();
 
@@ -224,7 +227,7 @@ export const verificarToken = async (req: Request, res: Response) => {
     }
 
     const token = jwt.sign(
-      { name: usuario.nombre, email: usuario.email },
+      { name: usuario.nombre, email: usuario.email, piture: usuario.imagenurl },
       SECRET_KEY_JWT,
       {
         expiresIn: "1h",
@@ -233,6 +236,7 @@ export const verificarToken = async (req: Request, res: Response) => {
     const userData = {
       name: usuario.nombre,
       email: usuario.email,
+      picture: usuario.imagenurl,
     };
     const query = encodeURIComponent(JSON.stringify(userData));
 
@@ -241,6 +245,7 @@ export const verificarToken = async (req: Request, res: Response) => {
         httpOnly: true,
         secure: true,
         sameSite: "none",
+        maxAge: 1000 * 60 * 60,
       })
       .redirect(`http://localhost:5173/?user=${query}`);
   } catch (err: any) {
@@ -252,12 +257,6 @@ export const verificarToken = async (req: Request, res: Response) => {
     );
   }
 };
-
-import jwt from "jsonwebtoken";
-import cifrarPassword from "../utils/auth/cifrarPassword.js";
-import tokenExpirado from "../utils/auth/tokenExpirado.js";
-dotenv.config();
-const SECRET_KEY_JWT = process.env.SECRET_KEY_JWT as string;
 
 //Registrar usuario cuando el usuario usa la autenticacion de google
 export const authGoogleCallback = async (req: Request, res: Response) => {
@@ -313,21 +312,21 @@ export const authGoogleCallback = async (req: Request, res: Response) => {
           },
         ]);
         if (insertError) {
-          console.log(insertError);
           return res.status(500).json({
             mensaje: "Error al registrar usuario -auht_provider_google",
           });
         }
 
-        const token = jwt.sign({ name, email }, SECRET_KEY_JWT, {
+        const token = jwt.sign({ name, email, picture }, SECRET_KEY_JWT, {
           expiresIn: "1h",
         });
         res.cookie("access_token", token, {
           httpOnly: true,
           secure: true,
           sameSite: "none",
+          maxAge: 1000 * 60 * 60,
         });
-        return res.status(200).json({ nombre: name, email });
+        return res.status(200).json({ name, email, picture });
       } else {
         return res
           .status(409)
@@ -337,13 +336,10 @@ export const authGoogleCallback = async (req: Request, res: Response) => {
 
     // Inicio de sesión
     if (accion === "iniciosesion") {
-      console.log(data);
       if (!data) {
-        console.log("no hay data");
         return res.status(404).json({ mensaje: "Usuario no encontrado" });
       }
 
-      console.log("no see");
       if (data.auth_provider !== "google") {
         return res.status(401).json({
           mensaje:
@@ -351,21 +347,20 @@ export const authGoogleCallback = async (req: Request, res: Response) => {
         });
       }
 
-      const token = jwt.sign({ email, name }, SECRET_KEY_JWT, {
+      const token = jwt.sign({ email, name, picture }, SECRET_KEY_JWT, {
         expiresIn: "1h",
       });
-      console.log(token);
       res.cookie("access_token", token, {
         httpOnly: true,
         secure: true,
         sameSite: "none",
+        maxAge: 1000 * 60 * 60,
       });
-      return res.status(200).json({ mensaje: "Inicio de sesión exitoso" });
+      return res.status(200).json({ name, email, picture });
     }
 
     return res.status(400).json({ mensaje: "Acción no válida" });
   } catch (err) {
-    console.error(err);
     return res
       .status(400)
       .json({ mensaje: "Token inválido o error en autenticación" });
@@ -376,13 +371,13 @@ export const verificarsesion = (req: AuthRequest, res: Response) => {
   console.log("verificar sesion");
 
   const session = req.session;
-
+  console.log(session);
   if (!session?.name) return res.status(403).json({ data: "Token no valido" });
 
   try {
     console.log("si es valido");
-    const { name, email } = session;
-    return res.status(200).json({ nombre: name, email });
+    const { name, email, picture } = session;
+    return res.status(200).json({ name, email, picture });
   } catch (error) {
     console.log("no es valido");
     return res.status(500).json({ data: "No se pudo verificar el token" });

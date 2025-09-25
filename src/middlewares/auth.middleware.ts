@@ -10,16 +10,17 @@ export function authMiddleware(
   next: NextFunction
 ) {
   const token = req.cookies?.access_token;
-  req.session = { name: undefined, email: undefined };
+  req.session = { name: undefined, email: undefined, picture: undefined };
   if (!token) return next();
 
   try {
     const data = jwt.verify(token, SECRET_KEY_JWT) as {
       name: string;
       email: string;
+      picture: string;
     };
     console.log(data);
-    req.session = { name: data.name, email: data.email };
+    req.session = { name: data.name, email: data.email, picture: data.picture };
   } catch {}
   return next();
 }

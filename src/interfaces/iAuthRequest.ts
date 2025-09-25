@@ -4,6 +4,7 @@ export default interface AuthRequest extends Request {
   session?: {
     name: string | undefined;
     email: string | undefined;
+    picture: string | undefined;
   };
   cookies: {
     access_token?: string;
