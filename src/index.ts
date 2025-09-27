@@ -10,7 +10,7 @@ import cookieParser from "cookie-parser";
 
 const PORT = process.env.PORT;
 
-const netlify = "https://rumbonica.netlify.app/";
+const netlify = "https://rumbonica.netlify.app";
 const local = "http://localhost:5173";
 
 const app = express();
