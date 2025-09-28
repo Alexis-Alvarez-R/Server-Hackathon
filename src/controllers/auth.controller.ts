@@ -1,7 +1,10 @@
 import { clienteGoogle, clienteGoogleId } from "../data-source.js";
 import { supabase } from "../data-source.js";
 import { generarToken } from "../utils/auth/crearToken.js";
+
 import enviarGmail from "../service/auth/enviarGmail.js";
+import { enviarCorreo } from "../service/auth/enviarCorreoSendGrid.js";
+
 import type { Request, Response } from "express";
 import type reqRegistrar from "../interfaces/iReqRegistrar.js";
 import validarEmail from "../utils/auth/validarEmail.js";
@@ -11,6 +14,7 @@ import type AuthRequest from "../interfaces/iAuthRequest.js";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 import tokenExpirado from "../utils/auth/tokenExpirado.js";
+
 dotenv.config();
 const SECRET_KEY_JWT = process.env.SECRET_KEY_JWT as string;
 
@@ -119,7 +123,7 @@ export const registrarUsuario = async (
               .json({ mensaje: "Error al actualizar token de verificacion" });
           }
         }
-        await enviarGmail(email, token);
+        await enviarCorreo(email, token);
         console.log("Se reenvio el link");
         return res.status(200).json({
           mensaje: "Usuario creado. Revisa tu correo para verificar tu cuenta.",
@@ -149,7 +153,7 @@ export const registrarUsuario = async (
       return res.status(500).json({ mensaje: "Error al insertar usuario" });
 
     console.log("se envio email");
-    await enviarGmail(email, token);
+    await enviarCorreo(email, token);
     return res.status(200).json({
       mensaje: "Revisa tu correo para verificar tu cuenta.",
     });
