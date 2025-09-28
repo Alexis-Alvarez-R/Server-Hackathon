@@ -153,7 +153,7 @@ export const registrarUsuario = async (
       return res.status(500).json({ mensaje: "Error al insertar usuario" });
 
     console.log("se envio email");
-    await enviarGmail(email, token);
+    await enviarCorreo(email, token);
     return res.status(200).json({
       mensaje: "Revisa tu correo para verificar tu cuenta.",
     });

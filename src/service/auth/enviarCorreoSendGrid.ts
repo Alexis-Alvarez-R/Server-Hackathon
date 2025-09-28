@@ -11,8 +11,8 @@ export async function enviarCorreo(email: string, token: string) {
   try {
     const msg = {
       to: email,
-      from: "tucorreo@tudominio.com",
-      subject: "Bienvenido",
+      from: "rumbonicaapp@gmail.com",
+      subject: "Bienvenido a RumboNica",
       html: `<p>Haz click en el link para verificar tu cuenta:</p>
                    <a href="http://localhost:${process.env.PORT}/auth/verificartoken?tokenVerificacion=${token}">Verificar correo</a>`,
     };
