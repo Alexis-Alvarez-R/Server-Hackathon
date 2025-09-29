@@ -1,7 +1,7 @@
 import { clienteGoogle, clienteGoogleId } from "../data-source.js";
 import { supabase } from "../data-source.js";
 
-import { netlify } from "../index.js";
+import { webUrl } from "../index.js";
 import { generarToken } from "../utils/auth/crearToken.js";
 
 import { enviarCorreo } from "../service/auth/enviarCorreoSendGrid.js";
@@ -175,7 +175,7 @@ export const verificarToken = async (req: Request, res: Response) => {
 
   if (!tokenVerificacion || typeof tokenVerificacion !== "string") {
     return res.redirect(
-      `${netlify}/verificaciontoken?estado=false&mensaje=No hay token`
+      `${webUrl}/verificaciontoken?estado=false&mensaje=No hay token`
     );
   }
 
@@ -190,7 +190,7 @@ export const verificarToken = async (req: Request, res: Response) => {
 
     if (error) {
       return res.redirect(
-        `${netlify}verificaciontoken?estado=false&mensaje=${encodeURIComponent(
+        `${webUrl}verificaciontoken?estado=false&mensaje=${encodeURIComponent(
           "Error al validar token"
         )}`
       );
@@ -198,7 +198,7 @@ export const verificarToken = async (req: Request, res: Response) => {
 
     if (!usuario) {
       return res.redirect(
-        `${netlify}/verificaciontoken?estado=false&mensaje=${encodeURIComponent(
+        `${webUrl}/verificaciontoken?estado=false&mensaje=${encodeURIComponent(
           "Token invalido, ya fue usado"
         )}`
       );
@@ -207,7 +207,7 @@ export const verificarToken = async (req: Request, res: Response) => {
     // Validar si ya expiró
     if (usuario.fechaexpiracion && tokenExpirado(usuario.fechaexpiracion)) {
       return res.redirect(
-        `${netlify}/verificaciontoken?estado=false&mensaje=${encodeURIComponent(
+        `${webUrl}/verificaciontoken?estado=false&mensaje=${encodeURIComponent(
           "token ya expiro"
         )}`
       );
@@ -225,7 +225,7 @@ export const verificarToken = async (req: Request, res: Response) => {
 
     if (errorUpdate) {
       return res.redirect(
-        `${netlify}/verificaciontoken?estado=false?mensaje=${encodeURIComponent(
+        `${webUrl}/verificaciontoken?estado=false?mensaje=${encodeURIComponent(
           "Error al actualizar token"
         )}`
       );
@@ -252,11 +252,11 @@ export const verificarToken = async (req: Request, res: Response) => {
         sameSite: "none",
         maxAge: 1000 * 60 * 60,
       })
-      .redirect(`${netlify}/?user=${query}`);
+      .redirect(`${webUrl}`);
   } catch (err: any) {
     console.error(err);
     return res.redirect(
-      `${netlify}/verificaciontoken?estado=false?mensaje=${encodeURIComponent(
+      `${webUrl}/verificaciontoken?estado=false?mensaje=${encodeURIComponent(
         "Error con el token"
       )}`
     );
