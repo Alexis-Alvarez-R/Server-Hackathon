@@ -35,7 +35,7 @@ export const iniciarSesion = async (req: Request, res: Response) => {
     const campo = validarEmail(identificacion) ? "email" : "nombre";
     const { data, error } = await supabase
       .from("usuarios")
-      .select("email, nombre, password, auth_provider, imagenurl")
+      .select("email, nombre, password, auth_provider, imagenurl, id_usuario")
       .eq(campo, identificacion)
       .eq("verificado", true)
       .maybeSingle();
@@ -53,7 +53,12 @@ export const iniciarSesion = async (req: Request, res: Response) => {
 
     if (data.password && (await compararPassword(data.password, password))) {
       const token = jwt.sign(
-        { name: data.nombre, email: data.email, picture: data.imagenurl },
+        {
+          id_usuario: data.id_usuario,
+          name: data.nombre,
+          email: data.email,
+          picture: data.imagenurl,
+        },
         SECRET_KEY_JWT,
         { expiresIn: "1h" }
       );
@@ -232,7 +237,12 @@ export const verificarToken = async (req: Request, res: Response) => {
     }
 
     const token = jwt.sign(
-      { name: usuario.nombre, email: usuario.email, piture: usuario.imagenurl },
+      {
+        id_usuario: usuario.id_usuario,
+        name: usuario.nombre,
+        email: usuario.email,
+        piture: usuario.imagenurl,
+      },
       SECRET_KEY_JWT,
       {
         expiresIn: "1h",
@@ -305,26 +315,34 @@ export const authGoogleCallback = async (req: Request, res: Response) => {
     // Registro
     if (accion === "registro") {
       if (!data) {
-        const { error: insertError } = await supabase.from("usuarios").insert([
-          {
-            email,
-            nombre: name,
-            password: null,
-            imagenurl: picture,
-            verificado: true,
-            auth_provider: "google",
-            token_verificacion: null,
-          },
-        ]);
+        const { data: insertData, error: insertError } = await supabase
+          .from("usuarios")
+          .insert([
+            {
+              email,
+              nombre: name,
+              password: null,
+              imagenurl: picture,
+              verificado: true,
+              auth_provider: "google",
+              token_verificacion: null,
+            },
+          ])
+          .select("id_usuario")
+          .single();
         if (insertError) {
           return res.status(500).json({
             mensaje: "Error al registrar usuario -auht_provider_google",
           });
         }
 
-        const token = jwt.sign({ name, email, picture }, SECRET_KEY_JWT, {
-          expiresIn: "1h",
-        });
+        const token = jwt.sign(
+          { id_usuario: insertData.id_usuario, name, email, picture },
+          SECRET_KEY_JWT,
+          {
+            expiresIn: "1h",
+          }
+        );
         res.cookie("access_token", token, {
           httpOnly: true,
           secure: true,
@@ -352,9 +370,13 @@ export const authGoogleCallback = async (req: Request, res: Response) => {
         });
       }
 
-      const token = jwt.sign({ email, name, picture }, SECRET_KEY_JWT, {
-        expiresIn: "1h",
-      });
+      const token = jwt.sign(
+        { id_usuario: data.id_usuario, email, name, picture },
+        SECRET_KEY_JWT,
+        {
+          expiresIn: "1h",
+        }
+      );
       res.cookie("access_token", token, {
         httpOnly: true,
         secure: true,
