@@ -1,5 +1,11 @@
 import { Router } from "express";
-import { getAves, getAvesPorZona } from "../controllers/aves.controller.js";
+import {
+  getAves,
+  getAvesPorReserva,
+  getAvesPorZona,
+  getReservas,
+  getReservasPorAve,
+} from "../controllers/aves.controller.js";
 
 const router = Router();
 

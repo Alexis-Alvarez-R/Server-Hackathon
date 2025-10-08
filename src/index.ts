@@ -7,6 +7,7 @@ import auth from "./routes/auth.routes.js";
 import aves from "./routes/aves.routes.js";
 import lugares from "./routes/lugares.routes.js";
 import comentarios from "./routes/comentarios.routes.js";
+import reservasNaturales from "./routes/reservasNaturales.routes.js";
 import cookieParser from "cookie-parser";
 
 const PORT = process.env.PORT;
@@ -29,6 +30,8 @@ app.use("/auth", auth);
 app.use("/lugares", lugares);
 
 app.use("/comentarios", comentarios);
+
+app.use("/reservas", reservasNaturales);
 
 app.listen(PORT, () => {
   console.log("Servidor corriendo");

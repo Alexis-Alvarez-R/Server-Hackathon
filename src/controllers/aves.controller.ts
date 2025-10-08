@@ -55,3 +55,90 @@ export const getAvesPorZona = async (req: Request, res: Response) => {
 
   res.json(result);
 };
+
+//Obtener reservas
+
+export const getReservas = async (req: Request, res: Response) => {
+  const { data, error } = await supabase.from("reservas_naturales").select(`
+      reserva_id,
+      nombre,
+      descripcion,
+      latitud,
+      longitud,
+      url_img,
+      departamentos(nombre)
+    `);
+
+  if (error) return res.status(400).json({ error: error.message });
+  res.json(data);
+};
+
+// /**
+//  * GET /reservas/departamento/:id
+//  * Filtrar reservas por departamento
+//  */
+// export const getReservasPorDepartamento = async (req: Request, res: Response) => {
+//   const { id } = req.params;
+
+//   const { data, error } = await supabase
+//     .from("reservas_naturales")
+//     .select("reserva_id, nombre, descripcion, latitud, longitud, url_img")
+//     .eq("departamento_id", id);
+
+//   if (error) return res.status(400).json({ error: error.message });
+//   res.json(data);
+// };
+
+/**
+ * GET /reservas/:id/aves
+ * Obtener aves según la reserva
+ */
+export const getAvesPorReserva = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const { data, error } = await supabase
+    .from("aves_reservas")
+    .select(
+      `
+      aves (
+        ave_id,
+        nombre_comun,
+        nombre_cientifico,
+        url_img,
+        estado_conservacion_id
+      ),
+      frecuencia_avistamiento
+    `
+    )
+    .eq("reserva_id", id);
+
+  if (error) return res.status(400).json({ error: error.message });
+  res.json(data);
+};
+
+/**
+ * GET /aves/:id/reservas
+ * Obtener reservas donde puede verse una ave específica
+ */
+export const getReservasPorAve = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const { data, error } = await supabase
+    .from("aves_reservas")
+    .select(
+      `
+      reservas_naturales (
+        reserva_id,
+        nombre,
+        latitud,
+        longitud,
+        url_img
+      ),
+      frecuencia_avistamiento
+    `
+    )
+    .eq("ave_id", id);
+
+  if (error) return res.status(400).json({ error: error.message });
+  res.json(data);
+};
