@@ -17,7 +17,7 @@ export async function Comentar(req: AuthRequest, res: Response) {
     const { data, error } = await supabase
       .from("comentarios")
       .insert([{ id_lugar, id_usuario, contenido, puntuacion }])
-      .select()
+      .select(`*, usuarios(*)`)
       .single();
 
     console.log(data);
@@ -56,5 +56,12 @@ export async function getComentarios(req: AuthRequest, res: Response) {
     res.status(200).json(data);
   } catch (error) {
     return res.status(500).json({ mensaje: "Upps intentelo mas tarde" });
+  }
+}
+
+export async function deleteComentario(req: AuthRequest, res: Response) {
+  const id_usuario = req.session?.id_usuario;
+  if (!id_usuario) {
+    return res.status(403).json({ mensaje: "Debe autenticarse para comentar" });
   }
 }

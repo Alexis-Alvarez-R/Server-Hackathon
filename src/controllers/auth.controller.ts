@@ -72,6 +72,7 @@ export const iniciarSesion = async (req: Request, res: Response) => {
         name: data.nombre,
         email: data.email,
         picture: data.imagenurl,
+        id_usuario: data.id_usuario,
       });
     }
 
@@ -349,7 +350,9 @@ export const authGoogleCallback = async (req: Request, res: Response) => {
           sameSite: "none",
           maxAge: 1000 * 60 * 60,
         });
-        return res.status(200).json({ name, email, picture });
+        return res
+          .status(200)
+          .json({ name, email, picture, id_usuario: data.id_usuario });
       } else {
         return res
           .status(409)
@@ -383,7 +386,9 @@ export const authGoogleCallback = async (req: Request, res: Response) => {
         sameSite: "none",
         maxAge: 1000 * 60 * 60,
       });
-      return res.status(200).json({ name, email, picture });
+      return res
+        .status(200)
+        .json({ name, email, picture, id_usuario: data.id_usuario });
     }
 
     return res.status(400).json({ mensaje: "Acción no válida" });
@@ -403,8 +408,8 @@ export const verificarsesion = (req: AuthRequest, res: Response) => {
 
   try {
     console.log("si es valido");
-    const { name, email, picture } = session;
-    return res.status(200).json({ name, email, picture });
+    const { name, email, picture, id_usuario } = session;
+    return res.status(200).json({ name, email, picture, id_usuario });
   } catch (error) {
     console.log("no es valido");
     return res.status(500).json({ data: "No se pudo verificar el token" });
