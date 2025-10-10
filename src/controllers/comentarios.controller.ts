@@ -59,9 +59,51 @@ export async function getComentarios(req: AuthRequest, res: Response) {
   }
 }
 
-export async function deleteComentario(req: AuthRequest, res: Response) {
+export async function editarComentario(req: AuthRequest, res: Response) {
+  // Solo se implementa la actualizacion del contenido,
+  // no la de la puntuacion, por ahora
+
   const id_usuario = req.session?.id_usuario;
   if (!id_usuario) {
     return res.status(403).json({ mensaje: "Debe autenticarse para comentar" });
+  }
+  const { id_comentario, contenidoNuevo } = req.body;
+
+  try {
+    const { data, error } = await supabase
+      .from("comentarios")
+      .update({ contenido: contenidoNuevo })
+      .eq("id_comentario", id_comentario)
+      .eq("id_usuario", id_usuario)
+      .select()
+      .single();
+
+    if (error) throw new Error("Error al actualizar comentario");
+
+    return res.status(200).json({ mensaje: "Comentario actualizado" });
+  } catch (error) {
+    return res.status(500).json({ mensaje: "Error al actualizar comentario" });
+  }
+}
+
+export async function deleteComentario(req: AuthRequest, res: Response) {
+  console.log("En eliminar Comentario");
+  const id_usuario = req.session?.id_usuario;
+  if (!id_usuario) {
+    return res.status(403).json({ mensaje: "Debe autenticarse para comentar" });
+  }
+
+  try {
+    const { id_comentario } = req.params;
+    const { error } = await supabase
+      .from("comentarios")
+      .delete()
+      .eq("id_comentario", id_comentario)
+      .eq("id_usuario", id_usuario);
+
+    if (error) throw new Error("Error al eliminar comentario");
+    return res.status(200).json({ mensaje: "Comentario Eliminado" });
+  } catch (error) {
+    return res.status(500).json({ mensaje: "Error eliminar comentario" });
   }
 }
