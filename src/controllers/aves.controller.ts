@@ -142,3 +142,18 @@ export const getReservasPorAve = async (req: Request, res: Response) => {
   if (error) return res.status(400).json({ error: error.message });
   res.json(data);
 };
+
+export const getImagenesAves = async (req: Request, res: Response) => {
+  const { aveId } = req.params;
+
+  try {
+    const { data, error } = await supabase.from("aves_imagenes").select("*").eq("ave_id", aveId);
+
+    if (error) throw new Error("Error al obtener las imagenes");
+
+    const arrayUrl = data.map((ave) => ave.url);
+    return res.status(200).json(arrayUrl);
+  } catch (error) {
+    return res.status(500).json("Error");
+  }
+};
