@@ -130,6 +130,7 @@ export const getReservasPorAve = async (req: Request, res: Response) => {
       reservas_naturales (
         reserva_id,
         nombre,
+        descripcion,
         latitud,
         longitud,
         url_img
