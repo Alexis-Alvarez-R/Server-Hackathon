@@ -8,6 +8,8 @@ import aves from "./routes/aves.routes.js";
 import lugares from "./routes/lugares.routes.js";
 import comentarios from "./routes/comentarios.routes.js";
 import reservasNaturales from "./routes/reservasNaturales.routes.js";
+import comercios from "./routes/comercios.routes.js";
+import guiaslocales from "./routes/guias.routes.js";
 import cookieParser from "cookie-parser";
 
 const PORT = process.env.PORT;
@@ -32,6 +34,10 @@ app.use("/lugares", lugares);
 app.use("/comentarios", comentarios);
 
 app.use("/reservas", reservasNaturales);
+
+app.use("/comercios", comercios);
+
+app.use("/guiaslocales", guiaslocales);
 
 app.listen(PORT, () => {
   console.log("Servidor corriendo");
