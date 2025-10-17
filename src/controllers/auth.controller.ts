@@ -24,7 +24,7 @@ export const iniciarSesion = async (req: Request, res: Response) => {
     console.log("Se entro en iniciarSesion");
     //Desde frontend el input email se llama asi propiamente
     //pero a uso practico permito que al usuario ingresar con su
-    //nombre o email en el mismo input
+    //nombre o email en el mismo inputS
     const { email: identificacion, password } = req.body;
 
     if (!identificacion)
@@ -425,4 +425,14 @@ export const verificarsesion = (req: AuthRequest, res: Response) => {
   }
 };
 
-export const cerrarsesion = (req: Request, res: Response) => {};
+export const cerrarsesion = (req: Request, res: Response) => {
+  console.log("Clear cookie");
+  res.clearCookie("access_token", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+  });
+  res
+    .status(200)
+    .json({ message: "Sesión cerrada correctamente", isclearCookie: true });
+};

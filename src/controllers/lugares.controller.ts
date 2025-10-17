@@ -66,7 +66,7 @@ Usuario: ${mensaje}
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer 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`,
+          Authorization: `Bearer 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`,
           "HTTP-Referer": "http://localhost:3000",
           "X-Title": "Asistente Turístico Nicaragua",
           "Content-Type": "application/json",

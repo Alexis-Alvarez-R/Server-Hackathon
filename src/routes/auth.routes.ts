@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   authGoogleCallback,
+  cerrarsesion,
   iniciarSesion,
   verificarsesion,
   verificarToken,
@@ -21,4 +22,6 @@ router.get("/verificartoken", verificarToken);
 router.post("/google/callback", authGoogleCallback);
 
 router.get("/verificarsesion", verificarsesion);
+
+router.get("/cerrarsesion", cerrarsesion);
 export default router;
