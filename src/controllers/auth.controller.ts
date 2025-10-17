@@ -27,8 +27,10 @@ export const iniciarSesion = async (req: Request, res: Response) => {
     //nombre o email en el mismo input
     const { email: identificacion, password } = req.body;
 
-    if (!identificacion) return res.status(400).json({ mensaje: "Campo es obligatorio" });
-    if (!password) return res.status(400).json({ mensaje: "Password no puede estar vacia" });
+    if (!identificacion)
+      return res.status(400).json({ mensaje: "Campo es obligatorio" });
+    if (!password)
+      return res.status(400).json({ mensaje: "Password no puede estar vacia" });
 
     const campo = validarEmail(identificacion) ? "email" : "nombre";
     const { data, error } = await supabase
@@ -38,11 +40,14 @@ export const iniciarSesion = async (req: Request, res: Response) => {
       .eq("verificado", true)
       .maybeSingle();
 
-    if (error) return res.status(500).json({ mensaje: "Error al iniciar sesion" });
-    if (!data) return res.status(404).json({ mensaje: "Usuario no encontrado" });
+    if (error)
+      return res.status(500).json({ mensaje: "Error al iniciar sesion" });
+    if (!data)
+      return res.status(404).json({ mensaje: "Usuario no encontrado" });
     if (data.auth_provider == "google") {
       return res.status(400).json({
-        mensaje: "Esta dirección ya está vinculada a una cuenta Google. Por favor, inicia sesión con Google",
+        mensaje:
+          "Esta dirección ya está vinculada a una cuenta Google. Por favor, inicia sesión con Google",
       });
     }
 
@@ -73,26 +78,48 @@ export const iniciarSesion = async (req: Request, res: Response) => {
 
     return res.status(401).json({ mensaje: "Contrasena no valida" });
   } catch (error) {
-    return res.status(500).json({ mensaje: "Upss algo salio mal, intentalo mas tarde" });
+    return res
+      .status(500)
+      .json({ mensaje: "Upss algo salio mal, intentalo mas tarde" });
   }
 };
 
+import validarSeguridadPassword from "../utils/auth/validarSeguridadPassword.js";
+
 //Registrar usuario
-export const registrarUsuario = async (req: Request<{}, {}, reqRegistrar, {}>, res: Response) => {
+export const registrarUsuario = async (
+  req: Request<{}, {}, reqRegistrar, {}>,
+  res: Response
+) => {
   try {
     console.log("se entro en Registrar usuario");
     const { nombre, email, password } = req.body;
 
-    if (!nombre) return res.status(400).json({ mensaje: "Nombre no puede estar vacio" });
-    if (!email) return res.status(400).json({ mensaje: "email no puede estar vacio" });
-    if (!password) return res.status(400).json({ mensaje: "Password no puede estar vacio" });
+    if (!nombre)
+      return res.status(400).json({ mensaje: "Nombre no puede estar vacio" });
+    if (!email)
+      return res.status(400).json({ mensaje: "email no puede estar vacio" });
+    if (!password)
+      return res.status(400).json({ mensaje: "Password no puede estar vacio" });
+
+    const mensaje = validarSeguridadPassword(password);
+
+    if (mensaje) {
+      return res.status(400).json({ mensaje });
+    }
+
     const token = generarToken();
 
-    const { data: data1, error: error1 } = await supabase.from("usuarios").select("*").eq("email", email).maybeSingle();
+    const { data: data1, error: error1 } = await supabase
+      .from("usuarios")
+      .select("*")
+      .eq("email", email)
+      .maybeSingle();
 
     if (error1)
       return res.status(500).json({
-        mensaje: "Ocurrio un error al consultar los datos, intenta nuevamente mas tarde",
+        mensaje:
+          "Ocurrio un error al consultar los datos, intenta nuevamente mas tarde",
       });
 
     if (data1) {
@@ -107,7 +134,9 @@ export const registrarUsuario = async (req: Request<{}, {}, reqRegistrar, {}>, r
             .eq("email", email);
 
           if (errorUpdate) {
-            return res.status(500).json({ mensaje: "Error al actualizar token de verificacion" });
+            return res
+              .status(500)
+              .json({ mensaje: "Error al actualizar token de verificacion" });
           }
         }
         await enviarCorreo(email, token);
@@ -117,22 +146,27 @@ export const registrarUsuario = async (req: Request<{}, {}, reqRegistrar, {}>, r
         });
       }
       console.log("Este email ya esta vinculado a otro perfil");
-      return res.status(400).json({ mensaje: "Este email ya esta vinculado a otro perfil" });
+      return res
+        .status(400)
+        .json({ mensaje: "Este email ya esta vinculado a otro perfil" });
     }
 
     const hashPassword: string = await cifrarPassword(password);
-    const { data: data2, error: error2 } = await supabase.from("usuarios").insert([
-      {
-        email: email,
-        password: hashPassword,
-        nombre: nombre,
-        imagenurl: null,
-        verificado: false,
-        token_verificacion: token,
-      },
-    ]);
+    const { data: data2, error: error2 } = await supabase
+      .from("usuarios")
+      .insert([
+        {
+          email: email,
+          password: hashPassword,
+          nombre: nombre,
+          imagenurl: null,
+          verificado: false,
+          token_verificacion: token,
+        },
+      ]);
 
-    if (error2) return res.status(500).json({ mensaje: "Error al insertar usuario" });
+    if (error2)
+      return res.status(500).json({ mensaje: "Error al insertar usuario" });
 
     console.log("se envio email");
     await enviarCorreo(email, token);
@@ -141,7 +175,9 @@ export const registrarUsuario = async (req: Request<{}, {}, reqRegistrar, {}>, r
     });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ mensaje: "Upss algo salio mal, intentalo mas tarde" });
+    return res
+      .status(500)
+      .json({ mensaje: "Upss algo salio mal, intentalo mas tarde" });
   }
 };
 
@@ -153,31 +189,43 @@ export const verificarToken = async (req: Request, res: Response) => {
   const { tokenVerificacion } = req.query;
 
   if (!tokenVerificacion || typeof tokenVerificacion !== "string") {
-    return res.redirect(`${webUrl}/verificaciontoken?estado=false&mensaje=No hay token`);
+    return res.redirect(
+      `${webUrl}/verificaciontoken?estado=false&mensaje=No hay token`
+    );
   }
 
   try {
     const { data: usuario, error } = await supabase
       .from("usuarios")
-      .select("id_usuario, fechaexpiracion, verificado, nombre, email, imagenurl")
+      .select(
+        "id_usuario, fechaexpiracion, verificado, nombre, email, imagenurl"
+      )
       .eq("token_verificacion", tokenVerificacion)
       .maybeSingle();
 
     if (error) {
       return res.redirect(
-        `${webUrl}verificaciontoken?estado=false&mensaje=${encodeURIComponent("Error al validar token")}`
+        `${webUrl}verificaciontoken?estado=false&mensaje=${encodeURIComponent(
+          "Error al validar token"
+        )}`
       );
     }
 
     if (!usuario) {
       return res.redirect(
-        `${webUrl}/verificaciontoken?estado=false&mensaje=${encodeURIComponent("Token invalido, ya fue usado")}`
+        `${webUrl}/verificaciontoken?estado=false&mensaje=${encodeURIComponent(
+          "Token invalido, ya fue usado"
+        )}`
       );
     }
 
     // Validar si ya expiró
     if (usuario.fechaexpiracion && tokenExpirado(usuario.fechaexpiracion)) {
-      return res.redirect(`${webUrl}/verificaciontoken?estado=false&mensaje=${encodeURIComponent("token ya expiro")}`);
+      return res.redirect(
+        `${webUrl}/verificaciontoken?estado=false&mensaje=${encodeURIComponent(
+          "token ya expiro"
+        )}`
+      );
     }
 
     // Marcar usuario como verificado y limpiar token
@@ -192,7 +240,9 @@ export const verificarToken = async (req: Request, res: Response) => {
 
     if (errorUpdate) {
       return res.redirect(
-        `${webUrl}/verificaciontoken?estado=false?mensaje=${encodeURIComponent("Error al actualizar token")}`
+        `${webUrl}/verificaciontoken?estado=false?mensaje=${encodeURIComponent(
+          "Error al actualizar token"
+        )}`
       );
     }
 
@@ -225,7 +275,11 @@ export const verificarToken = async (req: Request, res: Response) => {
       .redirect(`${webUrl}`);
   } catch (err: any) {
     console.error(err);
-    return res.redirect(`${webUrl}/verificaciontoken?estado=false?mensaje=${encodeURIComponent("Error con el token")}`);
+    return res.redirect(
+      `${webUrl}/verificaciontoken?estado=false?mensaje=${encodeURIComponent(
+        "Error con el token"
+      )}`
+    );
   }
 };
 
@@ -234,10 +288,12 @@ export const authGoogleCallback = async (req: Request, res: Response) => {
   console.log("Autenticación con Google");
 
   const accion = req.query.accion as string;
-  if (!accion) return res.status(400).json({ mensaje: "No se envió la acción" });
+  if (!accion)
+    return res.status(400).json({ mensaje: "No se envió la acción" });
 
   const { credential } = req.body;
-  if (!credential) return res.status(400).json({ mensaje: "No hay credencial" });
+  if (!credential)
+    return res.status(400).json({ mensaje: "No hay credencial" });
 
   try {
     // Verificar token de Google
@@ -251,13 +307,20 @@ export const authGoogleCallback = async (req: Request, res: Response) => {
     const { email, name, picture, email_verified } = payload;
 
     if (!email_verified) {
-      return res.status(400).json({ mensaje: "Correo no verificado por Google" });
+      return res
+        .status(400)
+        .json({ mensaje: "Correo no verificado por Google" });
     }
 
     // Buscar usuario en Supabase
-    const { data, error } = await supabase.from("usuarios").select("*").eq("email", email).maybeSingle();
+    const { data, error } = await supabase
+      .from("usuarios")
+      .select("*")
+      .eq("email", email)
+      .maybeSingle();
 
-    if (error) return res.status(500).json({ mensaje: "Error en base de datos" });
+    if (error)
+      return res.status(500).json({ mensaje: "Error en base de datos" });
 
     // Registro
     if (accion === "registro") {
@@ -283,18 +346,26 @@ export const authGoogleCallback = async (req: Request, res: Response) => {
           });
         }
 
-        const token = jwt.sign({ id_usuario: insertData.id_usuario, name, email, picture }, SECRET_KEY_JWT, {
-          expiresIn: "1h",
-        });
+        const token = jwt.sign(
+          { id_usuario: insertData.id_usuario, name, email, picture },
+          SECRET_KEY_JWT,
+          {
+            expiresIn: "1h",
+          }
+        );
         res.cookie("access_token", token, {
           httpOnly: true,
           secure: true,
           sameSite: "none",
           maxAge: 1000 * 60 * 60,
         });
-        return res.status(200).json({ name, email, picture, id_usuario: insertData.id_usuario });
+        return res
+          .status(200)
+          .json({ name, email, picture, id_usuario: insertData.id_usuario });
       } else {
-        return res.status(409).json({ mensaje: "Este correo ya está vinculado a una cuenta" });
+        return res
+          .status(409)
+          .json({ mensaje: "Este correo ya está vinculado a una cuenta" });
       }
     }
 
@@ -306,25 +377,34 @@ export const authGoogleCallback = async (req: Request, res: Response) => {
 
       if (data.auth_provider !== "google") {
         return res.status(401).json({
-          mensaje: "Este correo está registrado sin Google. Usa el inicio de sesión tradicional.",
+          mensaje:
+            "Este correo está registrado sin Google. Usa el inicio de sesión tradicional.",
         });
       }
 
-      const token = jwt.sign({ id_usuario: data.id_usuario, email, name, picture }, SECRET_KEY_JWT, {
-        expiresIn: "1h",
-      });
+      const token = jwt.sign(
+        { id_usuario: data.id_usuario, email, name, picture },
+        SECRET_KEY_JWT,
+        {
+          expiresIn: "1h",
+        }
+      );
       res.cookie("access_token", token, {
         httpOnly: true,
         secure: true,
         sameSite: "none",
         maxAge: 1000 * 60 * 60,
       });
-      return res.status(200).json({ name, email, picture, id_usuario: data.id_usuario });
+      return res
+        .status(200)
+        .json({ name, email, picture, id_usuario: data.id_usuario });
     }
 
     return res.status(400).json({ mensaje: "Acción no válida" });
   } catch (err) {
-    return res.status(400).json({ mensaje: "Token inválido o error en autenticación" });
+    return res
+      .status(400)
+      .json({ mensaje: "Token inválido o error en autenticación" });
   }
 };
 
